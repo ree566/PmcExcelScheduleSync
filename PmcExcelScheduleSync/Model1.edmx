@@ -1,0 +1,171 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<edmx:Edmx Version="3.0" xmlns:edmx="http://schemas.microsoft.com/ado/2009/11/edmx">
+  <!-- EF Runtime content -->
+  <edmx:Runtime>
+    <!-- SSDL content -->
+    <edmx:StorageModels>
+    <Schema Namespace="ATMCModel.Store" Provider="System.Data.SqlClient" ProviderManifestToken="2012" Alias="Self" xmlns:store="http://schemas.microsoft.com/ado/2007/12/edm/EntityStoreSchemaGenerator" xmlns:customannotation="http://schemas.microsoft.com/ado/2013/11/edm/customannotation" xmlns="http://schemas.microsoft.com/ado/2009/11/edm/ssdl">
+        <EntityType Name="PrepareSchedule">
+          <Key>
+            <PropertyRef Name="id" />
+          </Key>
+          <Property Name="id" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="po" Type="varchar" MaxLength="50" Nullable="false" />
+          <Property Name="modelName" Type="varchar" MaxLength="50" Nullable="false" />
+          <Property Name="lineType_id" Type="int" Nullable="false" />
+          <Property Name="totalQty" Type="int" Nullable="false" />
+          <Property Name="scheduleQty" Type="int" Nullable="false" />
+          <Property Name="timeCost" Type="decimal" Precision="10" Scale="1" Nullable="false" />
+          <Property Name="line_id" Type="int" />
+          <Property Name="undoneQty" Type="int" />
+          <Property Name="memo" Type="varchar" MaxLength="150" />
+          <Property Name="onboardDate" Type="datetime" Nullable="false" />
+          <Property Name="floor_id" Type="int" Nullable="false" />
+          <Property Name="priority" Type="int" />
+          <Property Name="createDate" Type="datetime" Nullable="false" />
+        </EntityType>
+        <EntityType Name="vTb_WorkTime">
+          <Key>
+            <PropertyRef Name="id" />
+          </Key>
+          <Property Name="id" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="modelName" Type="varchar" MaxLength="50" />
+          <Property Name="floorName" Type="varchar" MaxLength="10" />
+          <Property Name="speOwnerName" Type="varchar" MaxLength="50" />
+          <Property Name="eeOwnerName" Type="varchar" MaxLength="50" />
+          <Property Name="qcOwnerName" Type="varchar" MaxLength="50" />
+          <Property Name="assy" Type="decimal" Precision="10" Scale="2" />
+          <Property Name="t1" Type="decimal" Precision="10" Scale="2" />
+          <Property Name="t2" Type="decimal" Precision="10" Scale="2" />
+          <Property Name="t3" Type="decimal" Precision="10" Scale="2" />
+          <Property Name="t4" Type="decimal" Precision="10" Scale="2" />
+          <Property Name="packing" Type="decimal" Precision="10" Scale="2" />
+          <Property Name="preAssy" Type="decimal" Precision="10" Scale="2" />
+          <Property Name="assyPeople" Type="int" />
+          <Property Name="packingPeople" Type="int" />
+          <Property Name="packingLeadTime" Type="decimal" Precision="10" Scale="2" />
+        </EntityType>
+        <EntityContainer Name="ATMCModelStoreContainer">
+          <EntitySet Name="PrepareSchedule" EntityType="Self.PrepareSchedule" Schema="M3_BW" store:Type="Tables" />
+          <EntitySet Name="vTb_WorkTime" EntityType="Self.vTb_WorkTime" Schema="M3_BW" store:Type="Tables" />
+        </EntityContainer>
+      </Schema></edmx:StorageModels>
+    <!-- CSDL content -->
+    <edmx:ConceptualModels>
+      <Schema Namespace="ATMCModel" Alias="Self" annotation:UseStrongSpatialTypes="false" xmlns:annotation="http://schemas.microsoft.com/ado/2009/02/edm/annotation" xmlns:customannotation="http://schemas.microsoft.com/ado/2013/11/edm/customannotation" xmlns="http://schemas.microsoft.com/ado/2009/11/edm">
+        <EntityType Name="PrepareSchedule">
+          <Key>
+            <PropertyRef Name="id" />
+          </Key>
+          <Property Name="id" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="po" Type="String" MaxLength="50" FixedLength="false" Unicode="false" Nullable="false" />
+          <Property Name="modelName" Type="String" MaxLength="50" FixedLength="false" Unicode="false" Nullable="false" />
+          <Property Name="lineType_id" Type="Int32" Nullable="false" />
+          <Property Name="totalQty" Type="Int32" Nullable="false" />
+          <Property Name="scheduleQty" Type="Int32" Nullable="false" />
+          <Property Name="timeCost" Type="Decimal" Precision="10" Scale="1" Nullable="false" />
+          <Property Name="line_id" Type="Int32" />
+          <Property Name="undoneQty" Type="Int32" />
+          <Property Name="memo" Type="String" MaxLength="150" FixedLength="false" Unicode="false" />
+          <Property Name="onboardDate" Type="DateTime" Nullable="false" Precision="3" />
+          <Property Name="floor_id" Type="Int32" Nullable="false" />
+          <Property Name="priority" Type="Int32" />
+          <Property Name="createDate" Type="DateTime" Nullable="false" Precision="3" />
+        </EntityType>
+        <EntityContainer Name="ATMCEntities" annotation:LazyLoadingEnabled="true">
+          <EntitySet Name="PrepareSchedule" EntityType="Self.PrepareSchedule" />
+          <EntitySet Name="vTb_WorkTime" EntityType="ATMCModel.vTb_WorkTime" />
+        </EntityContainer>
+        <EntityType Name="vTb_WorkTime">
+          <Key>
+            <PropertyRef Name="id" />
+          </Key>
+          <Property Name="id" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="modelName" Type="String" MaxLength="50" FixedLength="false" Unicode="false" />
+          <Property Name="floorName" Type="String" MaxLength="10" FixedLength="false" Unicode="false" />
+          <Property Name="speOwnerName" Type="String" MaxLength="50" FixedLength="false" Unicode="false" />
+          <Property Name="eeOwnerName" Type="String" MaxLength="50" FixedLength="false" Unicode="false" />
+          <Property Name="qcOwnerName" Type="String" MaxLength="50" FixedLength="false" Unicode="false" />
+          <Property Name="assy" Type="Decimal" Precision="10" Scale="2" />
+          <Property Name="t1" Type="Decimal" Precision="10" Scale="2" />
+          <Property Name="t2" Type="Decimal" Precision="10" Scale="2" />
+          <Property Name="t3" Type="Decimal" Precision="10" Scale="2" />
+          <Property Name="t4" Type="Decimal" Precision="10" Scale="2" />
+          <Property Name="packing" Type="Decimal" Precision="10" Scale="2" />
+          <Property Name="preAssy" Type="Decimal" Precision="10" Scale="2" />
+          <Property Name="assyPeople" Type="Int32" />
+          <Property Name="packingPeople" Type="Int32" />
+          <Property Name="packingLeadTime" Type="Decimal" Precision="10" Scale="2" />
+        </EntityType>
+      </Schema>
+    </edmx:ConceptualModels>
+    <!-- C-S mapping content -->
+    <edmx:Mappings>
+      <Mapping Space="C-S" xmlns="http://schemas.microsoft.com/ado/2009/11/mapping/cs">
+        <EntityContainerMapping StorageEntityContainer="ATMCModelStoreContainer" CdmEntityContainer="ATMCEntities">
+          <EntitySetMapping Name="PrepareSchedule">
+            <EntityTypeMapping TypeName="ATMCModel.PrepareSchedule">
+              <MappingFragment StoreEntitySet="PrepareSchedule">
+                <ScalarProperty Name="id" ColumnName="id" />
+                <ScalarProperty Name="po" ColumnName="po" />
+                <ScalarProperty Name="modelName" ColumnName="modelName" />
+                <ScalarProperty Name="lineType_id" ColumnName="lineType_id" />
+                <ScalarProperty Name="totalQty" ColumnName="totalQty" />
+                <ScalarProperty Name="scheduleQty" ColumnName="scheduleQty" />
+                <ScalarProperty Name="timeCost" ColumnName="timeCost" />
+                <ScalarProperty Name="line_id" ColumnName="line_id" />
+                <ScalarProperty Name="undoneQty" ColumnName="undoneQty" />
+                <ScalarProperty Name="memo" ColumnName="memo" />
+                <ScalarProperty Name="onboardDate" ColumnName="onboardDate" />
+                <ScalarProperty Name="floor_id" ColumnName="floor_id" />
+                <ScalarProperty Name="priority" ColumnName="priority" />
+                <ScalarProperty Name="createDate" ColumnName="createDate" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="vTb_WorkTime">
+            <EntityTypeMapping TypeName="ATMCModel.vTb_WorkTime">
+              <MappingFragment StoreEntitySet="vTb_WorkTime">
+                <ScalarProperty Name="packingLeadTime" ColumnName="packingLeadTime" />
+                <ScalarProperty Name="packingPeople" ColumnName="packingPeople" />
+                <ScalarProperty Name="assyPeople" ColumnName="assyPeople" />
+                <ScalarProperty Name="preAssy" ColumnName="preAssy" />
+                <ScalarProperty Name="packing" ColumnName="packing" />
+                <ScalarProperty Name="t4" ColumnName="t4" />
+                <ScalarProperty Name="t3" ColumnName="t3" />
+                <ScalarProperty Name="t2" ColumnName="t2" />
+                <ScalarProperty Name="t1" ColumnName="t1" />
+                <ScalarProperty Name="assy" ColumnName="assy" />
+                <ScalarProperty Name="qcOwnerName" ColumnName="qcOwnerName" />
+                <ScalarProperty Name="eeOwnerName" ColumnName="eeOwnerName" />
+                <ScalarProperty Name="speOwnerName" ColumnName="speOwnerName" />
+                <ScalarProperty Name="floorName" ColumnName="floorName" />
+                <ScalarProperty Name="modelName" ColumnName="modelName" />
+                <ScalarProperty Name="id" ColumnName="id" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+        </EntityContainerMapping>
+      </Mapping>
+    </edmx:Mappings>
+  </edmx:Runtime>
+  <!-- EF Designer content (DO NOT EDIT MANUALLY BELOW HERE) -->
+  <Designer xmlns="http://schemas.microsoft.com/ado/2009/11/edmx">
+    <Connection>
+      <DesignerInfoPropertySet>
+        <DesignerProperty Name="MetadataArtifactProcessing" Value="EmbedInOutputAssembly" />
+      </DesignerInfoPropertySet>
+    </Connection>
+    <Options>
+      <DesignerInfoPropertySet>
+        <DesignerProperty Name="ValidateOnBuild" Value="true" />
+        <DesignerProperty Name="EnablePluralization" Value="false" />
+        <DesignerProperty Name="IncludeForeignKeysInModel" Value="true" />
+        <DesignerProperty Name="UseLegacyProvider" Value="false" />
+        <DesignerProperty Name="CodeGenerationStrategy" Value="None" />
+      </DesignerInfoPropertySet>
+    </Options>
+    <!-- Diagram content (shape and connector positions) -->
+    <Diagrams></Diagrams>
+  </Designer>
+</edmx:Edmx>
