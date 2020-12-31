@@ -29,37 +29,38 @@ namespace PmcExcelScheduleSync
             List<DateTime> dts = new List<DateTime>();
 
             //Get the next date data
-            DateTime startDate = new DateTime(2020, 10, 28);
-            //DateTime startDate = DateTime.Today;
+            //DateTime startDate = new DateTime(2020, 11, 2);
+            DateTime startDate = DateTime.Today;
 
-            //int captureDays = 5;
+            int captureDays = 5;
 
-            //if (startDate.Hour >= 17)
-            //{
-            //    startDate = startDate.AddDays(startDate.DayOfWeek == DayOfWeek.Saturday ? 2 : 1);
-            //}
+            if (startDate.Hour >= 17)
+            {
+                startDate = startDate.AddDays(startDate.DayOfWeek == DayOfWeek.Saturday ? 2 : 1);
+            }
 
             dts.Add(startDate);
-            //DateTime dt = startDate.AddDays(1);
+            DateTime dt = startDate.AddDays(1);
 
-            //for (int i = 1; i <= captureDays; i++)
-            //{
-            //    if (dt.DayOfWeek == DayOfWeek.Sunday)
-            //    {
-            //        dt = dt.AddDays(1);
-            //    }
-            //    dts.Add(dt);
-            //    dt = dt.AddDays(1);
-            //}
+            for (int i = 1; i <= captureDays; i++)
+            {
+                if (dt.DayOfWeek == DayOfWeek.Sunday)
+                {
+                    dt = dt.AddDays(1);
+                }
+                dts.Add(dt);
+                dt = dt.AddDays(1);
+            }
 
             //Read Assy(Non pre) schedule list
-            this.readAndSaveAssySchedule("\\\\aclfile.advantech.corp\\Group1\\DF\\PMC\\生產日排程\\APS 5F 組裝排程.xlsx", dts, 2);
+            this.readAndSaveAssySchedule("\\\\aclfile2.advantech.corp\\Group1\\DF\\PMC\\生產日排程\\APS 5F 組裝排程.xlsx", dts, 2);
+            //this.readAndSaveAssySchedule("C:\\Users\\MFG.ESOP\\Desktop\\testExcel\\APS 5F 組裝排程1730.xlsx", dts, 2);
 
             //Read test schedule list
-            //this.readAndSaveTestSchedule("\\\\aclfile.advantech.corp\\Group1\\DF\\PMC\\生產日排程\\TWM3 5F APS製程排程.xlsx", dts, 1);
+            this.readAndSaveTestSchedule("\\\\aclfile2.advantech.corp\\Group1\\DF\\PMC\\生產日排程\\TWM3 5F APS製程排程.xlsx", dts, 1);
 
             //Read pkg schedule list
-            //this.readAndSavePkgSchedule("\\\\aclfile.advantech.corp\\Group1\\DF\\PMC\\生產日排程\\TWM3 5F APS製程排程.xlsx", dts, 1);
+            this.readAndSavePkgSchedule("\\\\aclfile2.advantech.corp\\Group1\\DF\\PMC\\生產日排程\\TWM3 5F APS製程排程.xlsx", dts, 1);
 
             Application.Exit();
         }
@@ -154,7 +155,7 @@ namespace PmcExcelScheduleSync
                 return;
             }
             //Get 組裝 sheet
-            var table = ds.Tables[0];
+            var table = ds.Tables["5F--前置&組裝"];
 
             List<PrepareSchedule> dataInExcel = new List<PrepareSchedule>();
 
@@ -202,7 +203,7 @@ namespace PmcExcelScheduleSync
                             {
                                 po = table.Rows[row][3].ToString().Trim(),
                                 modelName = table.Rows[row][2].ToString().Trim(),
-                                lineType_id =  scheduleProcessField.Contains("BASSY") ? assyLineTypeId : preAssyLineTypeId,
+                                lineType_id = scheduleProcessField.Contains("BASSY") ? assyLineTypeId : preAssyLineTypeId,
                                 totalQty = totalQty,
                                 scheduleQty = scheduleQty,
                                 timeCost = timeCost,
@@ -240,17 +241,18 @@ namespace PmcExcelScheduleSync
                     floorId, newData.Count(), deletedData.Count()
                 );
 
-            var query = db.PrepareSchedule.GroupBy(x => x)
-              .Where(g => g.Count() > 1)
-              .Select(y => y.Key)
-              .ToList();
+            //var query = db.PrepareSchedule.GroupBy(x => x)
+            //  .Where(g => g.Count() > 1)
+            //  .Select(y => y.Key)
+            //  .ToList();
 
         }
 
         private void readAndSaveTestSchedule(String filePath, List<DateTime> dts, int floorId)
         {
+            //testLineTypeIds must equals sheetNames
             int[] testLineTypeIds = { 7, 8 };
-            int[] sheetTargetIndex = { 0, 1 };
+            string[] sheetNames = { "5F--T1", "5F--T2" };
 
             int i = 0;//For testing table.row["N"] is a number or not 
 
@@ -260,13 +262,12 @@ namespace PmcExcelScheduleSync
                 return;
             }
 
-            for (int k = 0; k < 2; k++)
+            for (int k = 0; k < testLineTypeIds.Length; k++)
             {
                 int testLineTypeId = testLineTypeIds[k];
-                int sheetIndex = sheetTargetIndex[k];
 
                 //Get T2 sheet
-                var table = ds.Tables[sheetIndex];
+                var table = ds.Tables[sheetNames[k]];
 
                 List<PrepareSchedule> dataInExcel = new List<PrepareSchedule>();
 
@@ -360,7 +361,7 @@ namespace PmcExcelScheduleSync
             }
 
             //Get 包裝 sheet
-            var table = ds.Tables[2];
+            var table = ds.Tables["5F--包裝"];
 
             int pkgLineTypeId = 3;
             List<PrepareSchedule> dataInExcel = new List<PrepareSchedule>();

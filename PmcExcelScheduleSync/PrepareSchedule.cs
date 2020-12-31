@@ -34,10 +34,9 @@ namespace PmcExcelScheduleSync
             if (obj is PrepareSchedule other)
             {
                 if (po == other.po &&
-                    modelName == other.modelName &&
+                    po == other.po &&
                     lineType_id == other.lineType_id &&
                     scheduleQty == other.scheduleQty &&
-                    timeCost == other.timeCost &&
                     onboardDate == other.onboardDate &&
                     floor_id == other.floor_id)
                     return true;
@@ -48,10 +47,9 @@ namespace PmcExcelScheduleSync
         public override int GetHashCode()
         {
             return po.GetHashCode() ^
-                modelName.GetHashCode() ^
+                po.GetHashCode() ^
                 lineType_id.GetHashCode() ^
                 scheduleQty.GetHashCode() ^
-                timeCost.GetHashCode() ^
                 onboardDate.GetHashCode() ^
                 floor_id.GetHashCode();
         }
