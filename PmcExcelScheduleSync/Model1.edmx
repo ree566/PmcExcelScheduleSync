@@ -5,6 +5,13 @@
     <!-- SSDL content -->
     <edmx:StorageModels>
     <Schema Namespace="ATMCModel.Store" Provider="System.Data.SqlClient" ProviderManifestToken="2012" Alias="Self" xmlns:store="http://schemas.microsoft.com/ado/2007/12/edm/EntityStoreSchemaGenerator" xmlns:customannotation="http://schemas.microsoft.com/ado/2013/11/edm/customannotation" xmlns="http://schemas.microsoft.com/ado/2009/11/edm/ssdl">
+        <EntityType Name="LineType">
+          <Key>
+            <PropertyRef Name="id" />
+          </Key>
+          <Property Name="id" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="name" Type="varchar" MaxLength="50" Nullable="false" />
+        </EntityType>
         <EntityType Name="PrepareSchedule">
           <Key>
             <PropertyRef Name="id" />
@@ -18,11 +25,22 @@
           <Property Name="timeCost" Type="decimal" Precision="10" Scale="1" Nullable="false" />
           <Property Name="line_id" Type="int" />
           <Property Name="undoneQty" Type="int" />
-          <Property Name="memo" Type="varchar" MaxLength="150" />
+          <Property Name="memo" Type="nvarchar" MaxLength="150" />
           <Property Name="onboardDate" Type="datetime" Nullable="false" />
           <Property Name="floor_id" Type="int" Nullable="false" />
           <Property Name="priority" Type="int" />
           <Property Name="createDate" Type="datetime" Nullable="false" />
+          <Property Name="hrc_memo" Type="nvarchar" MaxLength="150" />
+          <Property Name="po_memo" Type="nvarchar" MaxLength="150" />
+        </EntityType>
+        <EntityType Name="PrepareScheduleRemark_PMC">
+          <Key>
+            <PropertyRef Name="id" />
+          </Key>
+          <Property Name="id" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="date" Type="datetime" Nullable="false" />
+          <Property Name="pmc_remark" Type="nvarchar" MaxLength="300" Nullable="false" />
+          <Property Name="lineType_id" Type="int" Nullable="false" />
         </EntityType>
         <EntityType Name="vTb_WorkTime">
           <Key>
@@ -45,9 +63,43 @@
           <Property Name="packingPeople" Type="int" />
           <Property Name="packingLeadTime" Type="decimal" Precision="10" Scale="2" />
         </EntityType>
+        <Association Name="FK_PrepareSchedule_LineType">
+          <End Role="LineType" Type="Self.LineType" Multiplicity="1" />
+          <End Role="PrepareSchedule" Type="Self.PrepareSchedule" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="LineType">
+              <PropertyRef Name="id" />
+            </Principal>
+            <Dependent Role="PrepareSchedule">
+              <PropertyRef Name="lineType_id" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_PrepareScheduleRemark_PMC_LineType">
+          <End Role="LineType" Type="Self.LineType" Multiplicity="1" />
+          <End Role="PrepareScheduleRemark_PMC" Type="Self.PrepareScheduleRemark_PMC" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="LineType">
+              <PropertyRef Name="id" />
+            </Principal>
+            <Dependent Role="PrepareScheduleRemark_PMC">
+              <PropertyRef Name="lineType_id" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
         <EntityContainer Name="ATMCModelStoreContainer">
+          <EntitySet Name="LineType" EntityType="Self.LineType" Schema="M3_BW" store:Type="Tables" />
           <EntitySet Name="PrepareSchedule" EntityType="Self.PrepareSchedule" Schema="M3_BW" store:Type="Tables" />
+          <EntitySet Name="PrepareScheduleRemark_PMC" EntityType="Self.PrepareScheduleRemark_PMC" Schema="M3_BW" store:Type="Tables" />
           <EntitySet Name="vTb_WorkTime" EntityType="Self.vTb_WorkTime" Schema="M3_BW" store:Type="Tables" />
+          <AssociationSet Name="FK_PrepareSchedule_LineType" Association="Self.FK_PrepareSchedule_LineType">
+            <End Role="LineType" EntitySet="LineType" />
+            <End Role="PrepareSchedule" EntitySet="PrepareSchedule" />
+          </AssociationSet>
+          <AssociationSet Name="FK_PrepareScheduleRemark_PMC_LineType" Association="Self.FK_PrepareScheduleRemark_PMC_LineType">
+            <End Role="LineType" EntitySet="LineType" />
+            <End Role="PrepareScheduleRemark_PMC" EntitySet="PrepareScheduleRemark_PMC" />
+          </AssociationSet>
         </EntityContainer>
       </Schema></edmx:StorageModels>
     <!-- CSDL content -->
@@ -66,15 +118,28 @@
           <Property Name="timeCost" Type="Decimal" Precision="10" Scale="1" Nullable="false" />
           <Property Name="line_id" Type="Int32" />
           <Property Name="undoneQty" Type="Int32" />
-          <Property Name="memo" Type="String" MaxLength="150" FixedLength="false" Unicode="false" />
+          <Property Name="memo" Type="String" MaxLength="150" FixedLength="false" Unicode="true" />
           <Property Name="onboardDate" Type="DateTime" Nullable="false" Precision="3" />
           <Property Name="floor_id" Type="Int32" Nullable="false" />
           <Property Name="priority" Type="Int32" />
           <Property Name="createDate" Type="DateTime" Nullable="false" Precision="3" />
+          <Property Name="hrc_memo" Type="String" MaxLength="150" FixedLength="false" Unicode="true" />
+          <NavigationProperty Name="LineType" Relationship="ATMCModel.FK_PrepareSchedule_LineType" FromRole="PrepareSchedule" ToRole="LineType" />
+          <Property Name="po_memo" Type="String" MaxLength="150" FixedLength="false" Unicode="true" />
         </EntityType>
         <EntityContainer Name="ATMCEntities" annotation:LazyLoadingEnabled="true">
           <EntitySet Name="PrepareSchedule" EntityType="Self.PrepareSchedule" />
           <EntitySet Name="vTb_WorkTime" EntityType="ATMCModel.vTb_WorkTime" />
+          <EntitySet Name="LineType" EntityType="ATMCModel.LineType" />
+          <EntitySet Name="PrepareScheduleRemark_PMC" EntityType="ATMCModel.PrepareScheduleRemark_PMC" />
+          <AssociationSet Name="FK_PrepareSchedule_LineType" Association="ATMCModel.FK_PrepareSchedule_LineType">
+            <End Role="LineType" EntitySet="LineType" />
+            <End Role="PrepareSchedule" EntitySet="PrepareSchedule" />
+          </AssociationSet>
+          <AssociationSet Name="FK_PrepareScheduleRemark_PMC_LineType" Association="ATMCModel.FK_PrepareScheduleRemark_PMC_LineType">
+            <End Role="LineType" EntitySet="LineType" />
+            <End Role="PrepareScheduleRemark_PMC" EntitySet="PrepareScheduleRemark_PMC" />
+          </AssociationSet>
         </EntityContainer>
         <EntityType Name="vTb_WorkTime">
           <Key>
@@ -97,6 +162,49 @@
           <Property Name="packingPeople" Type="Int32" />
           <Property Name="packingLeadTime" Type="Decimal" Precision="10" Scale="2" />
         </EntityType>
+        <EntityType Name="LineType">
+          <Key>
+            <PropertyRef Name="id" />
+          </Key>
+          <Property Name="id" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="name" Type="String" Nullable="false" MaxLength="50" FixedLength="false" Unicode="false" />
+          <NavigationProperty Name="PrepareSchedule" Relationship="ATMCModel.FK_PrepareSchedule_LineType" FromRole="LineType" ToRole="PrepareSchedule" />
+          <NavigationProperty Name="PrepareScheduleRemark_PMC" Relationship="ATMCModel.FK_PrepareScheduleRemark_PMC_LineType" FromRole="LineType" ToRole="PrepareScheduleRemark_PMC" />
+        </EntityType>
+        <EntityType Name="PrepareScheduleRemark_PMC">
+          <Key>
+            <PropertyRef Name="id" />
+          </Key>
+          <Property Name="id" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="date" Type="DateTime" Nullable="false" Precision="3" />
+          <Property Name="pmc_remark" Type="String" Nullable="false" MaxLength="300" FixedLength="false" Unicode="true" />
+          <Property Name="lineType_id" Type="Int32" Nullable="false" />
+          <NavigationProperty Name="LineType" Relationship="ATMCModel.FK_PrepareScheduleRemark_PMC_LineType" FromRole="PrepareScheduleRemark_PMC" ToRole="LineType" />
+        </EntityType>
+        <Association Name="FK_PrepareSchedule_LineType">
+          <End Type="ATMCModel.LineType" Role="LineType" Multiplicity="1" />
+          <End Type="ATMCModel.PrepareSchedule" Role="PrepareSchedule" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="LineType">
+              <PropertyRef Name="id" />
+            </Principal>
+            <Dependent Role="PrepareSchedule">
+              <PropertyRef Name="lineType_id" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_PrepareScheduleRemark_PMC_LineType">
+          <End Type="ATMCModel.LineType" Role="LineType" Multiplicity="1" />
+          <End Type="ATMCModel.PrepareScheduleRemark_PMC" Role="PrepareScheduleRemark_PMC" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="LineType">
+              <PropertyRef Name="id" />
+            </Principal>
+            <Dependent Role="PrepareScheduleRemark_PMC">
+              <PropertyRef Name="lineType_id" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
       </Schema>
     </edmx:ConceptualModels>
     <!-- C-S mapping content -->
@@ -106,6 +214,8 @@
           <EntitySetMapping Name="PrepareSchedule">
             <EntityTypeMapping TypeName="ATMCModel.PrepareSchedule">
               <MappingFragment StoreEntitySet="PrepareSchedule">
+                <ScalarProperty Name="po_memo" ColumnName="po_memo" />
+                <ScalarProperty Name="hrc_memo" ColumnName="hrc_memo" />
                 <ScalarProperty Name="id" ColumnName="id" />
                 <ScalarProperty Name="po" ColumnName="po" />
                 <ScalarProperty Name="modelName" ColumnName="modelName" />
@@ -141,6 +251,24 @@
                 <ScalarProperty Name="speOwnerName" ColumnName="speOwnerName" />
                 <ScalarProperty Name="floorName" ColumnName="floorName" />
                 <ScalarProperty Name="modelName" ColumnName="modelName" />
+                <ScalarProperty Name="id" ColumnName="id" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="LineType">
+            <EntityTypeMapping TypeName="ATMCModel.LineType">
+              <MappingFragment StoreEntitySet="LineType">
+                <ScalarProperty Name="name" ColumnName="name" />
+                <ScalarProperty Name="id" ColumnName="id" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="PrepareScheduleRemark_PMC">
+            <EntityTypeMapping TypeName="ATMCModel.PrepareScheduleRemark_PMC">
+              <MappingFragment StoreEntitySet="PrepareScheduleRemark_PMC">
+                <ScalarProperty Name="lineType_id" ColumnName="lineType_id" />
+                <ScalarProperty Name="pmc_remark" ColumnName="pmc_remark" />
+                <ScalarProperty Name="date" ColumnName="date" />
                 <ScalarProperty Name="id" ColumnName="id" />
               </MappingFragment>
             </EntityTypeMapping>

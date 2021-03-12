@@ -7,6 +7,10 @@
       <Diagram DiagramId="a590e12cbf314298a577160d2e025b3d" Name="Diagram1">
         <EntityTypeShape EntityType="ATMCModel.PrepareSchedule" Width="1.5" PointX="0.75" PointY="0.75" IsExpanded="true" />
         <EntityTypeShape EntityType="ATMCModel.vTb_WorkTime" Width="1.5" PointX="3.375" PointY="0.75" />
+        <EntityTypeShape EntityType="ATMCModel.LineType" Width="1.5" PointX="0.75" PointY="6" />
+        <EntityTypeShape EntityType="ATMCModel.PrepareScheduleRemark_PMC" Width="1.5" PointX="5.375" PointY="0.75" />
+        <AssociationConnector Association="ATMCModel.FK_PrepareSchedule_LineType" />
+        <AssociationConnector Association="ATMCModel.FK_PrepareScheduleRemark_PMC_LineType" />
       </Diagram>
     </edmx:Diagrams>
   </edmx:Designer>

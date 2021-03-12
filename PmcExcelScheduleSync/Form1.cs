@@ -19,22 +19,83 @@ namespace PmcExcelScheduleSync
 
         private ATMCEntities db = new ATMCEntities();
 
+        private List<FileMappingSetting> settings;
+
+        private List<vTb_WorkTime> worktimes;
+
+        private enum LINETYPE
+        {
+            PREASSY = 9,
+            ASSY = 1,
+            TEST_T1 = 7,
+            TEST_T2 = 8,
+            PACKING = 3
+        }
+
+        class FileMappingSetting
+        {
+            public Dictionary<LINETYPE, string> sheetLineTypeMappings { get; set; }
+            public string filePath { get; set; }
+            public int floorId { get; set; }
+
+        }
+
         public Form1()
         {
             InitializeComponent();
         }
 
+        private void initExcelParams()
+        {
+            worktimes = db.vTb_WorkTime.ToList();
+            settings = new List<FileMappingSetting>();
+
+            settings.Add(new FileMappingSetting()
+            {
+                sheetLineTypeMappings = new Dictionary<LINETYPE, string>() {
+                    { LINETYPE.PREASSY, "5F--前置&組裝" },
+                    { LINETYPE.ASSY, "5F--前置&組裝" }
+                },
+                filePath = @"\\aclfile2.advantech.corp\Group1\DF\PMC\生產日排程\APS 5F 組裝排程.xlsx",
+                floorId = 2
+            });
+
+            settings.Add(new FileMappingSetting()
+            {
+                sheetLineTypeMappings = new Dictionary<LINETYPE, string>() {
+                    { LINETYPE.TEST_T1, "5F--T1" },
+                    { LINETYPE.TEST_T2, "5F--T2" }
+                },
+                filePath = @"\\aclfile2.advantech.corp\Group1\DF\PMC\生產日排程\TWM3 5F APS製程排程.xlsx",
+                floorId = 1
+            });
+
+            settings.Add(new FileMappingSetting()
+            {
+                sheetLineTypeMappings = new Dictionary<LINETYPE, string>() {
+                    { LINETYPE.PACKING, "5F--包裝" }
+                },
+                filePath = @"\\aclfile2.advantech.corp\Group1\DF\PMC\生產日排程\TWM3 5F APS製程排程.xlsx",
+                floorId = 1
+            });
+
+        }
+
         private void Form1_Load(object sender, EventArgs e)
         {
+            initExcelParams();
+
             List<DateTime> dts = new List<DateTime>();
 
             //Get the next date data
-            //DateTime startDate = new DateTime(2020, 11, 2);
             DateTime startDate = DateTime.Today;
+            int captureDays = 7;
 
-            int captureDays = 5;
+            //DateTime startDate = new DateTime(2021, 02, 22);
+            //int captureDays = 2;
+            
 
-            if (startDate.Hour >= 17)
+            if (startDate.Hour >= 20)
             {
                 startDate = startDate.AddDays(startDate.DayOfWeek == DayOfWeek.Saturday ? 2 : 1);
             }
@@ -52,22 +113,13 @@ namespace PmcExcelScheduleSync
                 dt = dt.AddDays(1);
             }
 
-            //Read Assy(Non pre) schedule list
-            this.readAndSaveAssySchedule("\\\\aclfile2.advantech.corp\\Group1\\DF\\PMC\\生產日排程\\APS 5F 組裝排程.xlsx", dts, 2);
-            //this.readAndSaveAssySchedule("C:\\Users\\MFG.ESOP\\Desktop\\testExcel\\APS 5F 組裝排程1730.xlsx", dts, 2);
-
-            //Read test schedule list
-            this.readAndSaveTestSchedule("\\\\aclfile2.advantech.corp\\Group1\\DF\\PMC\\生產日排程\\TWM3 5F APS製程排程.xlsx", dts, 1);
-
-            //Read pkg schedule list
-            this.readAndSavePkgSchedule("\\\\aclfile2.advantech.corp\\Group1\\DF\\PMC\\生產日排程\\TWM3 5F APS製程排程.xlsx", dts, 1);
+            readAndSaveSchedule(dts);
 
             Application.Exit();
         }
 
         private DataSet readFile(string filePath)
         {
-            //string file = Path.Combine(AppPath, filePath);
             string file = filePath;
             if (File.Exists(file))
             {
@@ -142,326 +194,194 @@ namespace PmcExcelScheduleSync
 
         }
 
-        private void readAndSaveAssySchedule(String filePath, List<DateTime> dts, int floorId)
+        private void readAndSaveSchedule(List<DateTime> dts)
         {
-
-            int assyLineTypeId = 1;
-            int preAssyLineTypeId = 9;
-            int i = 0;//For testing table.row["N"] is a number or not 
-
-            DataSet ds = this.readFile(filePath);
-            if (ds == null)
+            foreach (FileMappingSetting setting in settings)
             {
-                return;
-            }
-            //Get 組裝 sheet
-            var table = ds.Tables["5F--前置&組裝"];
+                Dictionary<LINETYPE, string> sheetLineTypeMappings = setting.sheetLineTypeMappings;
 
-            List<PrepareSchedule> dataInExcel = new List<PrepareSchedule>();
+                string filePath = setting.filePath;
+                int floorId = setting.floorId;
 
-            foreach (DateTime dt in dts)
-            {
-                Console.WriteLine("Process ASSY {0} Data", dt.ToString("yyyy/MM/dd"));
+                //For testing table.row["N"] is a number or not 
+                int i = 0;
 
-                //Get date field match current date
-                int dateIndex = 0;
-                for (var col = 1; col < table.Columns.Count; col++)
+                //PMC remark field index(always in excel row 3, index -1)
+                int remarkIndex = 2;
+
+                DataSet ds = this.readFile(filePath);
+                if (ds == null)
                 {
-                    var check_data = table.Rows[5][col];
-                    if (dt.Equals(check_data))
-                    {
-                        dateIndex = col;
-                        break;
-                    }
+                    return;
                 }
 
-                //把 DataSet 顯示出來
-                for (int row = 0; row < table.Rows.Count; row++)
+                foreach (KeyValuePair<LINETYPE, string> mapping in sheetLineTypeMappings)
                 {
-                    if (row < 6)
+                    LINETYPE lineType = mapping.Key;
+                    string sheetName = mapping.Value;
+
+                    //Get sheet
+                    var table = ds.Tables[sheetName];
+
+                    List<PrepareSchedule> dataInExcel = new List<PrepareSchedule>();
+
+                    foreach (DateTime dt in dts)
                     {
-                        continue;
-                    }
+                        Console.WriteLine("Process {0} {1} Data", lineType.ToString(), dt.ToString("yyyy/MM/dd"));
 
-                    string totalQtyField = table.Rows[row][4].ToString();
-                    string scheduleQtyField = table.Rows[row][dateIndex].ToString();
-
-                    if (int.TryParse(totalQtyField, out i) == true && Int32.Parse(totalQtyField) > 0 && int.TryParse(scheduleQtyField, out i) == true && Int32.Parse(scheduleQtyField) > 0)
-                    {
-                        var scheduleProcessField = table.Rows[row][1].ToString();
-                        var modelField = table.Rows[row][2];
-
-                        if (!System.DBNull.Value.Equals(modelField))
+                        //Get date field match current date
+                        int dateIndex = 0;
+                        for (var col = 1; col < table.Columns.Count; col++)
                         {
-                            Console.WriteLine("Type: {0} and ModelName: {1}", modelField.GetType(), modelField);
-                            //Console.WriteLine("TimeCost: {0}", table.Rows[row][dateIndex + 1]);
-                            int totalQty = Int32.Parse(totalQtyField);
-                            int scheduleQty = Int32.Parse(scheduleQtyField);
-                            decimal timeCost = Decimal.Parse(table.Rows[row][dateIndex + 1].ToString());
-
-                            dataInExcel.Add(new PrepareSchedule()
+                            var check_data = table.Rows[5][col];
+                            if (dt.Equals(check_data))
                             {
-                                po = table.Rows[row][3].ToString().Trim(),
-                                modelName = table.Rows[row][2].ToString().Trim(),
-                                lineType_id = scheduleProcessField.Contains("BASSY") ? assyLineTypeId : preAssyLineTypeId,
-                                totalQty = totalQty,
-                                scheduleQty = scheduleQty,
-                                timeCost = timeCost,
-                                floor_id = floorId,
-                                onboardDate = dt,
-                                priority = 0,
-                                undoneQty = 0,
-                                createDate = DateTime.Today
-                            });
-
-                        }
-                    }
-
-                }
-            }
-
-            List<PrepareSchedule> dataInDb = db.PrepareSchedule.Where(
-                p => dts.Contains(p.onboardDate) &&
-                (p.lineType_id == preAssyLineTypeId || p.lineType_id == assyLineTypeId) &&
-                p.floor_id == floorId)
-                .ToList();
-
-            //Compare data and add/remove
-            var newData = dataInExcel.Except(dataInDb);
-            var deletedData = dataInDb.Except(dataInExcel);
-
-            db.PrepareSchedule.AddRange(newData);
-            db.PrepareSchedule.RemoveRange(deletedData);
-            db.SaveChanges();
-            Console.WriteLine("FloorId {0} ASSY, Data in sql: {1}, data in excel: {2}",
-                    floorId, dataInDb.Count(), dataInExcel.Count()
-                );
-
-            Console.WriteLine("FloorId {0} ASSY, Data total add cnt: {1}, remove cnt: {2}",
-                    floorId, newData.Count(), deletedData.Count()
-                );
-
-            //var query = db.PrepareSchedule.GroupBy(x => x)
-            //  .Where(g => g.Count() > 1)
-            //  .Select(y => y.Key)
-            //  .ToList();
-
-        }
-
-        private void readAndSaveTestSchedule(String filePath, List<DateTime> dts, int floorId)
-        {
-            //testLineTypeIds must equals sheetNames
-            int[] testLineTypeIds = { 7, 8 };
-            string[] sheetNames = { "5F--T1", "5F--T2" };
-
-            int i = 0;//For testing table.row["N"] is a number or not 
-
-            DataSet ds = this.readFile(filePath);
-            if (ds == null)
-            {
-                return;
-            }
-
-            for (int k = 0; k < testLineTypeIds.Length; k++)
-            {
-                int testLineTypeId = testLineTypeIds[k];
-
-                //Get T2 sheet
-                var table = ds.Tables[sheetNames[k]];
-
-                List<PrepareSchedule> dataInExcel = new List<PrepareSchedule>();
-
-                foreach (DateTime dt in dts)
-                {
-                    //Get date field match current date
-                    int dateIndex = 0;
-                    for (var col = 1; col < table.Columns.Count; col++)
-                    {
-                        var check_data = table.Rows[5][col];
-                        if (dt.Equals(check_data))
-                        {
-                            dateIndex = col;
-                            break;
-                        }
-                    }
-
-                    //把 DataSet 顯示出來
-                    for (int row = 0; row < table.Rows.Count; row++)
-                    {
-                        if (row < 6)
-                        {
-                            continue;
-                        }
-
-                        string totalQtyField = table.Rows[row][4].ToString();
-                        string scheduleQtyField = table.Rows[row][dateIndex].ToString();
-
-                        if (int.TryParse(totalQtyField, out i) == true && Int32.Parse(totalQtyField) > 0 && int.TryParse(scheduleQtyField, out i) == true && Int32.Parse(scheduleQtyField) > 0)
-                        {
-                            var modelField = table.Rows[row][2];
-
-                            if (!System.DBNull.Value.Equals(modelField))
-                            {
-                                Console.WriteLine("Type: {0} and ModelName: {1}", modelField.GetType(), modelField);
-                                //Console.WriteLine("TimeCost: {0}", table.Rows[row][dateIndex + 1]);
-                                int totalQty = Int32.Parse(totalQtyField);
-                                int scheduleQty = Int32.Parse(scheduleQtyField);
-                                decimal timeCost = Decimal.Parse(table.Rows[row][dateIndex + 1].ToString());
-
-                                dataInExcel.Add(new PrepareSchedule()
-                                {
-                                    po = table.Rows[row][3].ToString().Trim(),
-                                    modelName = table.Rows[row][2].ToString().Trim(),
-                                    lineType_id = testLineTypeId,
-                                    totalQty = totalQty,
-                                    scheduleQty = scheduleQty,
-                                    timeCost = timeCost,
-                                    floor_id = floorId,
-                                    onboardDate = dt,
-                                    priority = 0,
-                                    undoneQty = 0,
-                                    createDate = DateTime.Today
-                                });
-
+                                dateIndex = col;
+                                break;
                             }
                         }
 
-                    }
-                }
+                        string remark = table.Rows[remarkIndex][dateIndex].ToString();
 
-                List<PrepareSchedule> dataInDb = db.PrepareSchedule.Where(
-                    p => dts.Contains(p.onboardDate) &&
-                    p.lineType_id == testLineTypeId &&
-                    p.floor_id == floorId)
-                    .ToList();
-
-                //Compare data and add/remove
-                var newData = dataInExcel.Except(dataInDb);
-                var deletedData = dataInDb.Except(dataInExcel);
-
-                db.PrepareSchedule.AddRange(newData);
-                db.PrepareSchedule.RemoveRange(deletedData);
-                db.SaveChanges();
-                Console.WriteLine("FloorId {0} Test, Data in sql: {1}, data in excel: {2}",
-                        floorId, dataInDb.Count(), dataInExcel.Count()
-                    );
-
-                Console.WriteLine("FloorId {0} Test, Data total add cnt: {1}, remove cnt: {2}",
-                        floorId, newData.Count(), deletedData.Count()
-                    );
-            }
-        }
-
-        private void readAndSavePkgSchedule(String filePath, List<DateTime> dts, int floorId)
-        {
-            DataSet ds = this.readFile(filePath);
-            if (ds == null)
-            {
-                return;
-            }
-
-            //Get 包裝 sheet
-            var table = ds.Tables["5F--包裝"];
-
-            int pkgLineTypeId = 3;
-            List<PrepareSchedule> dataInExcel = new List<PrepareSchedule>();
-
-            int i = 0;//For testing table.row["N"] is a number or not 
-
-            foreach (DateTime dt in dts)
-            {
-                //Get date field match current date
-                int dateIndex = 0;
-                for (var col = 1; col < table.Columns.Count; col++)
-                {
-                    var check_data = table.Rows[5][col];
-                    if (dt.Equals(check_data))
-                    {
-                        dateIndex = col;
-                        break;
-                    }
-                }
-
-                //Get worktime data(移除沒有packingLeadTime的機種)
-                //List<vTb_WorkTime> worktimes = db.vTb_WorkTime.Where(w => w.packingLeadTime != 0).ToList();
-                List<vTb_WorkTime> worktimes = db.vTb_WorkTime.ToList();
-
-                //把 DataSet 顯示出來
-                for (int row = 0; row < table.Rows.Count; row++)
-                {
-                    if (row < 6)
-                    {
-                        continue;
-                    }
-
-                    string totalQtyField = table.Rows[row][4].ToString();
-                    string scheduleQtyField = table.Rows[row][dateIndex].ToString();
-                    var modelField = table.Rows[row][2];
-
-                    if (int.TryParse(totalQtyField, out i) == true && Int32.Parse(totalQtyField) > 0 && int.TryParse(scheduleQtyField, out i) == true && Int32.Parse(scheduleQtyField) > 0 && !System.DBNull.Value.Equals(modelField))
-                    {
+                        //Save pmc remark at specific field
+                        if (lineType != LINETYPE.PREASSY)
                         {
+                            saveRemark(remark, (int)lineType, dt);
+                        }
 
-                            Console.WriteLine("Type: {0} and ModelName: {1}", modelField.GetType(), modelField);
-                            //Console.WriteLine("TimeCost: {0}", table.Rows[row][dateIndex + 1]);
-
-                            string modelName = table.Rows[row][2].ToString().Trim();
-
-                            var fitData = worktimes.FirstOrDefault(w => modelName.Equals(w.modelName));
-                            if (fitData == null)
+                        //把 DataSet 顯示出來
+                        for (int row = 0; row < table.Rows.Count; row++)
+                        {
+                            if (row < 6)
                             {
-                                Console.WriteLine("{0}, packingLeadTime is zero", modelName);
                                 continue;
                             }
 
-                            int totalQty = Int32.Parse(totalQtyField);
-                            int scheduleQty = Int32.Parse(scheduleQtyField);
-                            //decimal timeCost = Decimal.Parse(table.Rows[row][dateIndex + 1].ToString());
+                            string totalQtyField = table.Rows[row][4].ToString();
+                            string scheduleQtyField = table.Rows[row][dateIndex].ToString();
+                            var modelField = table.Rows[row][2];
 
-                            //Console.WriteLine("{0}: {1} x {2} = {3}", modelName, 
-                            //    fitData.packingLeadTime ?? 0, scheduleQty, (fitData.packingLeadTime ?? 0) * scheduleQty); 
-
-                            //https://stackoverflow.com/questions/4871994/how-can-i-convert-decimal-to-decimal
-                            dataInExcel.Add(new PrepareSchedule()
+                            if (int.TryParse(totalQtyField, out i) == true && Int32.Parse(totalQtyField) > 0 && int.TryParse(scheduleQtyField, out i) == true && Int32.Parse(scheduleQtyField) > 0 && !System.DBNull.Value.Equals(modelField))
                             {
-                                po = table.Rows[row][3].ToString().Trim(),
-                                modelName = modelName,
-                                lineType_id = 3,
-                                totalQty = totalQty,
-                                scheduleQty = scheduleQty,
-                                timeCost = (fitData.packingLeadTime ?? 0) * scheduleQty,
-                                floor_id = floorId,
-                                onboardDate = dt,
-                                priority = 0,
-                                undoneQty = 0,
-                                createDate = DateTime.Today
-                            });
+                                var scheduleProcessField = table.Rows[row][1].ToString();
+
+                                if (!System.DBNull.Value.Equals(modelField))
+                                {
+                                    Console.WriteLine("Type: {0} and ModelName: {1}", modelField.GetType(), modelField);
+
+                                    string po = table.Rows[row][3].ToString().Trim();
+                                    string modelName = table.Rows[row][2].ToString().Trim();
+                                    int totalQty = Int32.Parse(totalQtyField);
+                                    int scheduleQty = Int32.Parse(scheduleQtyField);
+
+                                    string poRemark = table.Rows[row][14].ToString().Trim();
+
+                                    decimal timeCost;
+                                    int lineTypeId;
+
+                                    if ((lineType == LINETYPE.PREASSY && scheduleProcessField.Contains("BASSY")) || (lineType == LINETYPE.ASSY && scheduleProcessField.Contains("AASSY")))
+                                    {
+                                        continue;
+                                    }
+
+                                    if (lineType == LINETYPE.PREASSY || lineType == LINETYPE.ASSY)
+                                    {
+                                        lineTypeId = scheduleProcessField.Contains("BASSY") ? (int)LINETYPE.ASSY : (int)LINETYPE.PREASSY;
+                                    }
+                                    else
+                                    {
+                                        lineTypeId = (int)lineType;
+                                    }
+
+                                    if (lineType == LINETYPE.PACKING)
+                                    {
+                                        var fitData = worktimes.FirstOrDefault(w => modelName.Equals(w.modelName));
+                                        if (fitData == null)
+                                        {
+                                            Console.WriteLine("{0}, packingLeadTime is zero", modelName);
+                                            continue;
+                                        }
+                                        timeCost = (fitData.packingLeadTime ?? 0) * scheduleQty;
+                                    }
+                                    else
+                                    {
+                                        timeCost = Decimal.Parse(table.Rows[row][dateIndex + 1].ToString());
+                                    }
+
+
+                                    dataInExcel.Add(new PrepareSchedule()
+                                    {
+                                        po = po,
+                                        modelName = modelName,
+                                        lineType_id = lineTypeId,
+                                        totalQty = totalQty,
+                                        scheduleQty = scheduleQty,
+                                        timeCost = timeCost,
+                                        floor_id = floorId,
+                                        onboardDate = dt,
+                                        priority = 0,
+                                        undoneQty = 0,
+                                        po_memo = "".Equals(poRemark) ? null : poRemark,
+                                        createDate = DateTime.Today
+                                    });
+
+                                }
+                            }
+
                         }
+
                     }
+
+                    List<PrepareSchedule> dataInDb = db.PrepareSchedule.Where(
+                        p => dts.Contains(p.onboardDate) &&
+                        (p.lineType_id == (int)lineType) &&
+                        p.floor_id == floorId)
+                        .ToList();
+
+                    //Compare data and add/remove
+                    var newData = dataInExcel.Except(dataInDb);
+                    var deletedData = dataInDb.Except(dataInExcel);
+
+                    db.PrepareSchedule.AddRange(newData);
+                    db.PrepareSchedule.RemoveRange(deletedData);
+                    db.SaveChanges();
+
+                    Console.WriteLine("FloorId {0} {1}, Data in sql: {2}, data in excel: {3}",
+                            floorId, lineType.ToString(), dataInDb.Count(), dataInExcel.Count()
+                        );
+
+                    Console.WriteLine("FloorId {0} {1}, Data total add cnt: {2}, remove cnt: {3}",
+                            floorId, lineType.ToString(), newData.Count(), deletedData.Count()
+                        );
+
                 }
             }
+        }
 
-            List<PrepareSchedule> dataInDb = db.PrepareSchedule.Where(
-                p => dts.Contains(p.onboardDate) &&
-                p.lineType_id == pkgLineTypeId &&
-                p.floor_id == floorId)
-                .ToList();
+        private void saveRemark(string remark, int lineType_id, DateTime dt)
+        {
+            PrepareScheduleRemark_PMC existData = db.PrepareScheduleRemark_PMC
+                .Where(p => p.date == dt && p.lineType_id == lineType_id)
+                .FirstOrDefault();
 
-            //Compare data and add/remove
-            var newData = dataInExcel.Except(dataInDb);
-            var deletedData = dataInDb.Except(dataInExcel);
-
-            db.PrepareSchedule.AddRange(newData);
-            db.PrepareSchedule.RemoveRange(deletedData);
-            db.SaveChanges();
-            Console.WriteLine("FloorId {0} PKG,  Data in sql: {1}, data in excel: {2}",
-                    floorId, dataInDb.Count(), dataInExcel.Count()
-                );
-
-            Console.WriteLine("FloorId {0} PKG, Data total add cnt: {1}, remove cnt: {2}",
-                    floorId, newData.Count(), deletedData.Count()
-                );
-
+            if (!"".Equals(remark.Trim()))
+            {
+                if (existData == null)
+                {
+                    db.PrepareScheduleRemark_PMC.Add(new PrepareScheduleRemark_PMC()
+                    {
+                        date = dt,
+                        pmc_remark = remark,
+                        lineType_id = lineType_id
+                    });
+                }
+                else
+                {
+                    existData.pmc_remark = remark;
+                    db.Entry(existData).State = EntityState.Modified;
+                }
+                db.SaveChanges();
+            }
         }
     }
 }

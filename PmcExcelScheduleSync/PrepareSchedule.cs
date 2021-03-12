@@ -11,7 +11,7 @@ namespace PmcExcelScheduleSync
 {
     using System;
     using System.Collections.Generic;
-
+    
     public partial class PrepareSchedule
     {
         public int id { get; set; }
@@ -28,30 +28,9 @@ namespace PmcExcelScheduleSync
         public int floor_id { get; set; }
         public Nullable<int> priority { get; set; }
         public System.DateTime createDate { get; set; }
-
-        public override bool Equals(object obj)
-        {
-            if (obj is PrepareSchedule other)
-            {
-                if (po == other.po &&
-                    po == other.po &&
-                    lineType_id == other.lineType_id &&
-                    scheduleQty == other.scheduleQty &&
-                    onboardDate == other.onboardDate &&
-                    floor_id == other.floor_id)
-                    return true;
-            }
-            return false;
-        }
-
-        public override int GetHashCode()
-        {
-            return po.GetHashCode() ^
-                po.GetHashCode() ^
-                lineType_id.GetHashCode() ^
-                scheduleQty.GetHashCode() ^
-                onboardDate.GetHashCode() ^
-                floor_id.GetHashCode();
-        }
+        public string hrc_memo { get; set; }
+        public string po_memo { get; set; }
+    
+        public virtual LineType LineType { get; set; }
     }
 }

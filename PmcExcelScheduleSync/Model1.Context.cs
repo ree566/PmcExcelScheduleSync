@@ -27,5 +27,7 @@ namespace PmcExcelScheduleSync
     
         public virtual DbSet<PrepareSchedule> PrepareSchedule { get; set; }
         public virtual DbSet<vTb_WorkTime> vTb_WorkTime { get; set; }
+        public virtual DbSet<LineType> LineType { get; set; }
+        public virtual DbSet<PrepareScheduleRemark_PMC> PrepareScheduleRemark_PMC { get; set; }
     }
 }
